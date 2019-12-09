@@ -201,33 +201,35 @@ public class GraphicsDisplay extends JPanel {
     }
 
     protected void paintDelta(Graphics2D canvas){
-        Double step_x = (maxX - minX)/100;
-        Double step_y = (maxY - minY)/100;
+        FontRenderContext context = canvas.getFontRenderContext();
+        Double step_x = (maxX - minX)/10;
+        Double step_y = (maxY - minY)/10;
         int i = 0;
         canvas.setStroke(deltaStroke);
         canvas.setColor(Color.BLACK);
         canvas.setPaint(Color.BLACK);
         Double step = Math.min(step_x, step_y)*2.0/3.0;
         for (Double temp = minX; temp < maxX; temp += step_x){
-            if (i % 5 == 0){
-                canvas.draw(new Line2D.Double(xyToPoint(temp, step), xyToPoint(temp, -step)));
-            }
-            else{
-                canvas.draw(new Line2D.Double(xyToPoint(temp, step/2), xyToPoint(temp, -step/2)));
-            }
+                canvas.draw(new Line2D.Double(xyToPoint(temp, step/2 - 1), xyToPoint(temp, -step/2 + 1)));
+
+            Point2D.Double coordLabelPos = xyToPoint(temp, step/2);
+            Rectangle2D coordbounds = axisFont.getStringBounds("0", context);
+            canvas.drawString("x = " + temp, (float)coordLabelPos.getX() - 35, (float)(coordLabelPos.getY() - coordbounds.getY()));
+
             i++;
         }
         i = 0;
         for (Double temp = minY; temp < maxY; temp += step_y){
-            if (i % 5 == 0){
-                canvas.draw(new Line2D.Double(xyToPoint(step, temp), xyToPoint(-step, temp)));
-            }
-            else{
-                canvas.draw(new Line2D.Double(xyToPoint(step/2, temp), xyToPoint(-step/2, temp)));
-            }
+                canvas.draw(new Line2D.Double(xyToPoint(step/2 - 1, temp), xyToPoint(-step/2 + 1, temp)));
+
+            Point2D.Double coordLabelPos = xyToPoint(step/2, temp );
+            Rectangle2D coordbounds = axisFont.getStringBounds("0", context);
+            canvas.drawString("y = " + temp, (float)coordLabelPos.getX() - 15, (float)(coordLabelPos.getY() - coordbounds.getY()) - 30);
+
             i++;
         }
     }
+
 
     protected void paintLabels(Graphics2D canvas){
         canvas.setColor(Color.BLACK);
@@ -250,6 +252,9 @@ public class GraphicsDisplay extends JPanel {
         canvas.setFont(axisFont);
         FontRenderContext context = canvas.getFontRenderContext();
 
+
+
+
         if (minX <= 0.0 && maxX >= 0.0) {
             canvas.draw(new Line2D.Double(xyToPoint(0, maxY), xyToPoint(0, minY)));
             GeneralPath arrow = new GeneralPath();
@@ -261,6 +266,9 @@ public class GraphicsDisplay extends JPanel {
             arrow.closePath();
             canvas.draw(arrow);
             canvas.fill(arrow);
+
+
+
 
             Rectangle2D bounds = axisFont.getStringBounds("y", context);
             Point2D.Double labelPos = xyToPoint(0, maxY);
@@ -310,7 +318,7 @@ public class GraphicsDisplay extends JPanel {
         this.repaint();
     }
 
-    protected int findSelectedPoint(int x, int y)
+   protected int findSelectedPoint(int x, int y)
     {
         if (graphicsData == null) return -1;
         int pos = 0;

@@ -3,6 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="6a106b35-a2b2-4ccd-a6d4-9721d5f2d810" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay$MouseHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay$MouseHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay$MouseMotionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay$MouseMotionHandler.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.java" afterDir="false" />
     </list>
@@ -25,7 +27,7 @@
   <component name="ProjectId" id="1Ue8ld4SBPFNUmU265EcJfuWfVL" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../LAB3" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
