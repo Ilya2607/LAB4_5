@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="6a106b35-a2b2-4ccd-a6d4-9721d5f2d810" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/LAB4_5/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/bsu/rfe/java/group8/lab4/KOROTCHENKO/var10/GraphicsDisplay.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -76,7 +77,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

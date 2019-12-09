@@ -2,8 +2,17 @@ package bsu.rfe.java.group8.lab4.KOROTCHENKO.var10;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.*;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 
 @SuppressWarnings("serial")
 public class GraphicsDisplay extends JPanel {
@@ -12,34 +21,69 @@ public class GraphicsDisplay extends JPanel {
     private boolean showAxis = true;
     private boolean showMarkers = true;
     private boolean showDelta = true;
+    private boolean scaleMode = false;
+    private boolean isZoomed = false;
+    private Double[] originalPoint = new Double[2];
+    private Rectangle2D.Double selectionRect = new Rectangle2D.Double();
+    private int selectedMarker = -1;
+    private static DecimalFormat formatter=(DecimalFormat) NumberFormat.getInstance();
 
     private double minX;
     private double maxX;
     private double minY;
     private double maxY;
 
+    private double minXo;
+    private double maxXo;
+    private double minYo;
+    private double maxYo;
+
     private double scale;
+    private double scaleX;
+    private double scaleY;
 
     private BasicStroke graphicsStroke;
     private BasicStroke axisStroke;
     private BasicStroke markerStroke;
     private BasicStroke deltaStroke;
+    private BasicStroke selectionStroke;
 
     private Font axisFont;
+    private Font labelsFont;
 
 
     public GraphicsDisplay() {
         setBackground(Color.WHITE);
-        graphicsStroke = new BasicStroke(6.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{40, 10, 10, 10, 20, 10, 10, 10, 40, 20}, 0.0f);
+        graphicsStroke = new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{40, 10, 10, 10, 20, 10, 10, 10, 40, 20}, 0.0f);
         axisStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         markerStroke = new BasicStroke(0.1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         deltaStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
-
+        selectionStroke = new BasicStroke(1.0F, 0, 0, 10.0F, new float[] { 10, 10 }, 0.0F);
         axisFont = new Font("Serif", Font.BOLD, 36);
+        labelsFont = new java.awt.Font("Serif",0,10);
+        addMouseMotionListener(new MouseMotionHandler());
+        addMouseListener(new MouseHandler());
     }
 
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
+
+        this.minXo = graphicsData[0][0];
+        this.maxXo = graphicsData[graphicsData.length -1][0];
+        this.minYo = graphicsData[0][1];
+        this.maxYo = this.minYo;
+
+        for (int i = 1; i < graphicsData.length; i++) {
+            if (graphicsData[i][1] < this.minYo) {
+                this.minYo = graphicsData[i][1];
+            }
+            if (graphicsData[i][1] > this.maxYo) {
+                this.maxYo = graphicsData[i][1];
+            }
+        }
+
+        zoomToRegion(minXo, maxYo, maxXo, minYo);
+
         repaint();
     }
 
@@ -63,34 +107,22 @@ public class GraphicsDisplay extends JPanel {
         super.paintComponent(g);
         if (graphicsData==null || graphicsData.length==0) return;
 
-        minX = graphicsData[0][0];
-        maxX = graphicsData[graphicsData.length-1][0];
-        minY = graphicsData[0][1];
-        maxY = minY;
+        if (scaleMode == false){
+            scaleX = this.getSize().getWidth() / (maxX - minX);
+            scaleY = this.getSize().getHeight() / (maxY - minY);
 
-        for (int i = 1; i<graphicsData.length; i++) {
-            if (graphicsData[i][1]<minY) {
-                minY = graphicsData[i][1];
+            scale = Math.min(scaleX, scaleY);
+
+            if (scale==scaleX) {
+                double yIncrement = (getSize().getHeight()/scale - (maxY - minY))/2;
+                maxY += yIncrement;
+                minY -= yIncrement;
             }
-            if (graphicsData[i][1]>maxY) {
-                maxY = graphicsData[i][1];
+            if (scale==scaleY) {
+                double xIncrement = (getSize().getWidth()/scale - (maxX - minX))/2;
+                maxX += xIncrement;
+                minX -= xIncrement;
             }
-        }
-
-        double scaleX = getSize().getWidth() / (maxX - minX);
-        double scaleY = getSize().getHeight() / (maxY - minY);
-
-        scale = Math.min(scaleX, scaleY);
-
-        if (scale==scaleX) {
-            double yIncrement = (getSize().getHeight()/scale - (maxY - minY))/2;
-            maxY += yIncrement;
-            minY -= yIncrement;
-        }
-        if (scale==scaleY) {
-            double xIncrement = (getSize().getWidth()/scale - (maxX - minX))/2;
-            maxX += xIncrement;
-            minX -= xIncrement;
         }
 
         Graphics2D canvas = (Graphics2D) g;
@@ -100,26 +132,38 @@ public class GraphicsDisplay extends JPanel {
         Font oldFont = canvas.getFont();
         if (showAxis) paintAxis(canvas);
         paintGraphics(canvas);
+        paintLabels(canvas);
         if (showMarkers) paintMarkers(canvas);
         if (showDelta) paintDelta(canvas);
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
         canvas.setColor(oldColor);
         canvas.setStroke(oldStroke);
+        paintSelection(canvas);
+    }
+
+    private void paintSelection(Graphics2D canvas) {
+        if (!scaleMode) return;
+        canvas.setStroke(selectionStroke);
+        canvas.setColor(Color.BLACK);
+        canvas.draw(selectionRect);
     }
 
     protected void paintGraphics(Graphics2D canvas){
         canvas.setStroke(graphicsStroke);
         canvas.setColor(Color.BLUE);
         GeneralPath graphics = new GeneralPath();
+        int j = 0;
         for (int i=0; i<graphicsData.length; i++) {
-            Point2D.Double point = xyToPoint(graphicsData[i][0],
-                    graphicsData[i][1]);
-            if (i>0) {
-                graphics.lineTo(point.getX(), point.getY());
-            }
-            else {
-                graphics.moveTo(point.getX(), point.getY());
+            Point2D.Double point = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+            if ((graphicsData[i][0] >= minX) && (graphicsData[i][1] <= maxY) &&
+                    (graphicsData[i][0] <= maxX) && (graphicsData[i][1] >= minY)) {
+                if (j > 0) {
+                    graphics.lineTo(point.getX(), point.getY());
+                } else {
+                    graphics.moveTo(point.getX(), point.getY());
+                }
+                j++;
             }
         }
         canvas.draw(graphics);
@@ -157,32 +201,45 @@ public class GraphicsDisplay extends JPanel {
     }
 
     protected void paintDelta(Graphics2D canvas){
-        double scaleX = getSize().getWidth() / (maxX - minX);
-        double scaleY = getSize().getHeight() / (maxY - minY);
         Double step_x = (maxX - minX)/100;
         Double step_y = (maxY - minY)/100;
         int i = 0;
         canvas.setStroke(deltaStroke);
         canvas.setColor(Color.BLACK);
         canvas.setPaint(Color.BLACK);
+        Double step = Math.min(step_x, step_y)*2.0/3.0;
         for (Double temp = minX; temp < maxX; temp += step_x){
             if (i % 5 == 0){
-                canvas.draw(new Line2D.Double(xyToPoint(temp, step_y), xyToPoint(temp, -step_y)));
+                canvas.draw(new Line2D.Double(xyToPoint(temp, step), xyToPoint(temp, -step)));
             }
             else{
-                canvas.draw(new Line2D.Double(xyToPoint(temp, step_y/2), xyToPoint(temp, -step_y/2)));
+                canvas.draw(new Line2D.Double(xyToPoint(temp, step/2), xyToPoint(temp, -step/2)));
             }
             i++;
         }
         i = 0;
         for (Double temp = minY; temp < maxY; temp += step_y){
             if (i % 5 == 0){
-                canvas.draw(new Line2D.Double(xyToPoint(step_x, temp), xyToPoint(-step_x, temp)));
+                canvas.draw(new Line2D.Double(xyToPoint(step, temp), xyToPoint(-step, temp)));
             }
             else{
-                canvas.draw(new Line2D.Double(xyToPoint(step_x/2, temp), xyToPoint(-step_x/2, temp)));
+                canvas.draw(new Line2D.Double(xyToPoint(step/2, temp), xyToPoint(-step/2, temp)));
             }
             i++;
+        }
+    }
+
+    protected void paintLabels(Graphics2D canvas){
+        canvas.setColor(Color.BLACK);
+        canvas.setFont(this.labelsFont);
+        FontRenderContext context=canvas.getFontRenderContext();
+        if (selectedMarker >= 0)
+        {
+            Point2D.Double point = xyToPoint(graphicsData[selectedMarker][0], graphicsData[selectedMarker][1]);
+            String label = "X=" + formatter.format(graphicsData[selectedMarker][0]) + ", Y=" + formatter.format(graphicsData[selectedMarker][1]);
+            Rectangle2D bounds = labelsFont.getStringBounds(label, context);
+            canvas.setColor(Color.BLACK);
+            canvas.drawString(label, (float)(point.getX() + 5.0D), (float)(point.getY() - bounds.getHeight()));
         }
     }
 
@@ -234,10 +291,87 @@ public class GraphicsDisplay extends JPanel {
         return new Point2D.Double(deltaX*scale, deltaY*scale);
     }
 
+    protected Double[] translatePointToXY(int x, int y)
+    {
+        return new Double[] { minX + x / this.scaleX, maxY - y / this.scaleY };
+    }
+
     protected Point2D.Double shiftPoint(Point2D.Double src, double deltaX, double deltaY) {
         Point2D.Double dest = new Point2D.Double();
         dest.setLocation(src.getX() + deltaX, src.getY() + deltaY);
         return dest;
     }
-}
 
+    public void zoomToRegion(double x1, double y1, double x2, double y2){
+        minX = x1;
+        maxY = y1;
+        maxX = x2;
+        minY = y2;
+        this.repaint();
+    }
+
+    protected int findSelectedPoint(int x, int y)
+    {
+        if (graphicsData == null) return -1;
+        int pos = 0;
+        for (Double[] point : graphicsData) {
+            Point2D.Double screenPoint = xyToPoint(point[0].doubleValue(), point[1].doubleValue());
+            double distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) + (screenPoint.getY() - y) * (screenPoint.getY() - y);
+            if (distance < 100) return pos;
+            pos++;
+        }	    return -1;
+    }
+
+    public class MouseHandler extends MouseAdapter{
+        public MouseHandler(){};
+
+        public void mouseClicked(MouseEvent ev) {
+            if (ev.getButton() == 3) {
+                isZoomed = false;
+                zoomToRegion(minXo, maxYo, maxXo, minYo);
+                repaint();
+            }
+        }
+
+        public void mousePressed(MouseEvent ev){
+            if (ev.getButton() != 1 || isZoomed) return;
+            scaleMode = true;
+            setCursor(Cursor.getPredefinedCursor(5));
+            selectionRect.setFrame(ev.getX(), ev.getY(), 1.0D, 1.0D);
+            originalPoint = translatePointToXY(ev.getX(), ev.getY());
+        }
+
+        public void mouseReleased(MouseEvent ev) {
+            if (ev.getButton() != 1 || isZoomed) return;
+            setCursor(Cursor.getPredefinedCursor(0));
+            isZoomed = true;
+            scaleMode = false;
+            Double[] finalPoint = new Double[2];
+            finalPoint = translatePointToXY(ev.getX(), ev.getY());
+            zoomToRegion(originalPoint[0], originalPoint[1], finalPoint[0], finalPoint[1]);
+            repaint();
+        }
+    }
+
+    public class MouseMotionHandler implements MouseMotionListener {
+
+        public void mouseDragged(MouseEvent ev) {
+            double width = ev.getX() - selectionRect.getX();
+            if (width < 5.0D) {
+                width = 5.0D;
+            }
+            double height = ev.getY() - selectionRect.getY();
+            if (height < 5.0D) {
+                height = 5.0D;
+            }
+            selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
+            repaint();
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent ev) {
+            selectedMarker = findSelectedPoint(ev.getX(), ev.getY());
+            repaint();
+        }
+    }
+}
