@@ -267,8 +267,9 @@ public class GraphicsDisplay extends JPanel {
             canvas.draw(arrow);
             canvas.fill(arrow);
 
-
-
+            Point2D.Double coordLabelPos = xyToPoint(0, 0);
+            Rectangle2D coordbounds = axisFont.getStringBounds("0", context);
+            canvas.drawString("0", (float)coordLabelPos.getX() - 20, (float)(coordLabelPos.getY() - coordbounds.getY()) - 5);
 
             Rectangle2D bounds = axisFont.getStringBounds("y", context);
             Point2D.Double labelPos = xyToPoint(0, maxY);
